@@ -12,11 +12,10 @@ builder_inputs = NP.array([[0, 0, 1],
                            [0, 1, 1]]) # این داده‌های آموزشی است
 builder_outputs = NP.array([[0, 1, 1, 0]]).T # خروجی داده‌های آموزشی
 
-NP.random.seed(1)
-synaps_weight = 2 * NP.random.random((3, 1)) - 1
+synaps_weight = NP.zeros((3, 1))
 print(synaps_weight)
 
-for i in range(20000): # بخش آموزش
+for i in range(100000): # بخش آموزش
     input_layers = builder_inputs
     output = sigmoid(NP.dot(input_layers, synaps_weight))
     error = builder_outputs - output
