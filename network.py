@@ -1,9 +1,9 @@
 import numpy as np
-from layers import Layer  
+from layers import Layers  
 
 class NeuralNetwork:
     def __init__(self, layer_sizes, learning_rate=0.1):
-        self.layers = [Layer(layer_sizes[i + 1], layer_sizes[i]) for i in range(len(layer_sizes) - 1)]
+        self.layers = [Layers(layer_sizes[i + 1], layer_sizes[i]) for i in range(len(layer_sizes) - 1)]
         self.learning_rate = learning_rate  
 
     def feedforward(self, inputs):
@@ -43,4 +43,4 @@ network.train(train_inputs, train_outputs, epochs=1000)
 
 # **✅ تست خروجی پس از آموزش**
 output = network.feedforward(train_inputs)
-print("خروجی شبکه بعد از آموزش:", output)
+print("output:", output)
