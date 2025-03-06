@@ -27,6 +27,7 @@ class NeuralNetwork:
             if epoch % 100 == 0:
                 loss = np.mean(error ** 2)  # خطای MSE
                 print(f"Epoch {epoch}, Loss: {loss:.5f}")
+np.random.seed(1)
 
 # **✅ داده‌های آموزشی چند نمونه‌ای**
 train_inputs = np.array([
