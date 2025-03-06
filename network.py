@@ -2,7 +2,7 @@ import numpy as np
 from layers import Layers  
 
 class NeuralNetwork:
-    def __init__(self, layer_sizes, learning_rate=0.1):
+    def __init__(self, layer_sizes, learning_rate):
         self.layers = [
             Layers(layer_sizes[i + 1], layer_sizes[i], activation='relu' if i < len(layer_sizes) - 2 else 'sigmoid')
             for i in range(len(layer_sizes) - 1)
