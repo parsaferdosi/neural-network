@@ -43,7 +43,7 @@ class NeuralNetwork:
                 for j, neuron in enumerate(layer.neurons):
                     neuron.weight=data[f"w{i}"][j]
                     neuron.bias=data[f"b{i}"][j]
-                print("load complete")
+            print("load complete")
 np.random.seed(1)
 # **✅ آزمایش
 # **✅ داده‌های آموزشی چند نمونه‌ای**
