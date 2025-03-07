@@ -1,50 +1,60 @@
-# Neural Network
+# شبکه عصبی
 
-## Introduction
-This repository contains a simple neural network built from scratch using NumPy. The network is designed for experimentation and learning, with a focus on understanding fundamental deep learning concepts. Currently, it processes and learns from test inputs stored within the neural network file.
+## معرفی
 
-## Features
-- **Fully implemented in NumPy**: No external deep learning libraries like TensorFlow or PyTorch.
-- **Three main components**:
-  - `neuron.py`: Implements individual neurons with weights, biases, and activation functions.
-  - `layers.py`: Manages multiple neurons within a layer.
-  - `network.py`: Combines multiple layers to form the complete network.
-- **Activation Functions**: Uses both **Sigmoid** and **ReLU** for learning.
-- **Basic Learning Capability**: The model currently processes and learns from predefined test inputs.
-- **Weight Storage and Retrieval**: Allows saving and loading trained weights for reuse.
+این مخزن شامل یک شبکه عصبی ساده است که از ابتدا با استفاده از کتابخانه NumPy پیاده‌سازی شده است. هدف این پروژه، یادگیری و آزمایش مفاهیم پایه‌ای یادگیری عمیق است. در حال حاضر، این مدل داده‌های تستی ذخیره‌شده در فایل شبکه عصبی را پردازش کرده و یاد می‌گیرد.
 
-## Project Structure
+## ویژگی‌ها
+
+- **پیاده‌سازی کامل با NumPy**: بدون استفاده از کتابخانه‌های یادگیری عمیق مانند TensorFlow یا PyTorch.
+- **سه بخش اصلی**:
+  - `neuron.py`: پیاده‌سازی نورون‌ها همراه با وزن‌ها، بایاس و توابع فعال‌سازی.
+  - `layers.py`: مدیریت چندین نورون در قالب یک لایه.
+  - `network.py`: ترکیب چندین لایه برای تشکیل شبکه عصبی کامل.
+- **توابع فعال‌سازی**: از **Sigmoid** و **ReLU** برای یادگیری استفاده می‌کند.
+- **توانایی یادگیری اولیه**: این مدل در حال حاضر داده‌های تستی را پردازش کرده و از آن‌ها یاد می‌گیرد.
+- **ذخیره و بازیابی وزن‌ها**: امکان ذخیره و بارگذاری وزن‌های آموزش‌دیده‌شده برای استفاده مجدد.
+
+## ساختار پروژه
+
 ```
-├── neuron.py       # Implementation of individual neurons
-├── layers.py       # Layer management containing multiple neurons
-├── network.py      # Neural network combining multiple layers
-├── README.md       # Project documentation
+├── neuron.py       # پیاده‌سازی نورون‌های منفرد
+├── layers.py       # مدیریت چندین نورون در قالب لایه‌ها
+├── network.py      # شبکه عصبی شامل چندین لایه
+├── README.md       # مستندات پروژه
 ```
 
-## Installation
-Clone the repository and install dependencies:
+## نصب
+
+برای دریافت مخزن و نصب وابستگی‌ها، از دستورات زیر استفاده کنید: 
+
 ```sh
 git clone https://github.com/parsaferdosi/neural-network.git
 cd neural-network
 pip install numpy
 ```
 
+## استفاده
 
-## Usage
-### Running the Network
-To run the network and test its learning capabilities, execute:
+### اجرای شبکه عصبی
+
+برای اجرای شبکه و آزمایش قابلیت یادگیری آن، دستور زیر را اجرا کنید
+
 ```sh
 python network.py
 ```
-This will process the test inputs and train the model.
 
-## Future Plans
-- Adapt the neural network for OCR (Optical Character Recognition) applications
-- Implement image preprocessing techniques for better text recognition
-- Train the model on real-world datasets instead of test inputs
-- Explore different architectures for improved performance
+این عملیات ورودی‌های تست را پردازش کرده و مدل را آموزش می‌دهد.
 
-## Contributing
-Feel free to fork this repository and contribute! Open an issue or submit a pull request if you have any ideas or improvements.
+## برنامه‌های آینده
 
-and thanks chatGPT for helping me make this readme file
+- تطبیق شبکه عصبی برای کاربردهای **OCR (تشخیص نویسه‌های نوری)**
+- پیاده‌سازی تکنیک‌های **پیش‌پردازش تصویر** برای بهبود تشخیص متن
+- آموزش مدل روی **داده‌های واقعی** به‌جای ورودی‌های تستی
+- بررسی **معماری‌های مختلف** برای بهبود عملکرد مدل
+
+## همکاری در توسعه
+
+اگر ایده یا پیشنهادی برای بهبود این پروژه دارید، می‌توانید **فورک** کنید و درخواست تغییر (Pull Request) ارسال کنید یا در بخش **Issues** مشکلات و پیشنهادات خود را مطرح کنید.
+
+و تشکر از چت جی پی تی برای کمک در نوشتن این فایل readme
