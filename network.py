@@ -1,7 +1,7 @@
 import numpy as np
 from layers import Layers  
 import os 
-
+import time 
 class NeuralNetwork:
     def __init__(self, layer_sizes, learning_rate):
         self.layers = [
@@ -44,6 +44,7 @@ class NeuralNetwork:
                     neuron.weight=data[f"w{i}"][j]
                     neuron.bias=data[f"b{i}"][j]
             print("load complete")
+start=time.time()
 np.random.seed(1)
 # **✅ آزمایش
 # **✅ داده‌های آموزشی چند نمونه‌ای**
@@ -73,3 +74,5 @@ else:
 test_input = np.array([[0.5, -0.6, 0.1, 0.2]])
 output = network.feedforward(test_input)
 print("output:", output)
+end=time.time()
+print(f"benchmark: {end - start:.4f} seconds")
