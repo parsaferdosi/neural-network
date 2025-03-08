@@ -1,78 +1,55 @@
 import numpy as np
 from layers import Layers  
-import os 
-import time 
+
 class NeuralNetwork:
     def __init__(self, layer_sizes, learning_rate):
         self.layers = [
-            Layers(layer_sizes[i + 1], layer_sizes[i], activation='relu' if i < len(layer_sizes) - 2 else 'sigmoid')
+            Layers(layer_sizes[i + 1], layer_sizes[i], activation='relu' if i < len(layer_sizes) - 2 else 'softmax')
             for i in range(len(layer_sizes) - 1)
         ]
         self.learning_rate = learning_rate 
         
-
-
     def feedforward(self, inputs):
         """ اجرای مرحله feedforward در تمام لایه‌ها """
         for layer in self.layers:
             inputs = layer.feedforward(inputs)
         return inputs
 
-    def train(self, train_inputs, train_outputs, epochs):
-        """ آموزش شبکه با الگوریتم پس‌انتشار خطا """
-        for epoch in range(epochs):
-            output = self.feedforward(train_inputs)
-            error = train_outputs - output
+    def train(self, train_inputs, train_outputs, epochs, batch_size=128):
+        num_samples = train_inputs.shape[0]
 
-            for layer in reversed(self.layers):
-                error = layer.backward(error, self.learning_rate)
+        for epoch in range(epochs):
+            for i in range(0, num_samples, batch_size):
+                batch_inputs = train_inputs[i:i+batch_size]
+                batch_outputs = train_outputs[i:i+batch_size]
+
+                output = np.squeeze(self.feedforward(batch_inputs))
+                error = batch_outputs - output  
+
+                for layer in reversed(self.layers):
+                    error = layer.backward(error, self.learning_rate)
 
             if epoch % 100 == 0:
-                loss = np.mean(error ** 2)  # خطای MSE
+                loss = self.cross_entropy_loss(train_outputs, self.feedforward(train_inputs))
                 print(f"Epoch {epoch}, Loss: {loss:.5f}")
-    def save_weight(self,filename="memmoryCore.npz"):
-        weights_data={}
-        for i , Layer in enumerate(self.layers):
-            weights_data[f"w{i}"]=np.array([neuron.weight for neuron in Layer.neurons])
-            weights_data[f"b{i}"]=np.array([neuron.bias for neuron in Layer.neurons])
+
+    def cross_entropy_loss(self, y_true, y_pred):
+        """ تابع خطای Cross-Entropy """
+        y_pred = np.clip(y_pred, 1e-9, 1 - 1e-9)  # جلوگیری از log(0)
+        return -np.sum(y_true * np.log(y_pred)) / y_true.shape[0]
+
+    def save_weight(self, filename="memmoryCore.npz"):
+        weights_data = {}
+        for i, layer in enumerate(self.layers):
+            weights_data[f"w{i}"] = np.array([neuron.weight for neuron in layer.neurons])
+            weights_data[f"b{i}"] = np.array([neuron.bias[0] for neuron in layer.neurons])  # ذخیره به‌صورت اسکالر
         np.savez(filename, **weights_data)
-        print("train succsesfully saved")
-    def load_weight(self,filename="memmoryCore.npz"):
-            data=np.load(filename,allow_pickle=True)
-            for i,layer in enumerate(self.layers):
-                for j, neuron in enumerate(layer.neurons):
-                    neuron.weight=data[f"w{i}"][j]
-                    neuron.bias=data[f"b{i}"][j]
-            print("load complete")
-start=time.time()
-np.random.seed(1)
-# **✅ آزمایش
-# **✅ داده‌های آموزشی چند نمونه‌ای**
-train_inputs = np.array([
-    [0.5, -0.6, 0.1, 0.2],
-    [0.2,  0.8, -0.5, -0.1],
-    [0.9, -0.4,  0.3,  0.7],
-    [-0.2, 0.5, 0.9, -0.4]
-])
-train_outputs = np.array([
-    [1, 0],
-    [0, 1],
-    [1, 1],
-    [0, 0]
-])
+        print("✅ Weights successfully saved!")
 
-# **✅ ایجاد شبکه و آموزش**
-layer_sizes = [4, 3, 2]  
-network = NeuralNetwork(layer_sizes, learning_rate=0.05)
-if os.path.exists("memmoryCore.npz"):
-    network.load_weight()
-else:
-    network.train(train_inputs, train_outputs, epochs=1000)
-    network.save_weight()
-
-# **✅ تست شبکه با ورودی‌های جدید**
-test_input = np.array([[0.5, -0.6, 0.1, 0.2]])
-output = network.feedforward(test_input)
-print("output:", output)
-end=time.time()
-print(f"benchmark: {end - start:.4f} seconds")
+    def load_weight(self, filename="memmoryCore.npz"):
+        data = np.load(filename, allow_pickle=True)
+        for i, layer in enumerate(self.layers):
+            for j, neuron in enumerate(layer.neurons):
+                neuron.weight = data[f"w{i}"][j].copy()
+                neuron.bias = np.array([data[f"b{i}"][j]])  # تبدیل مقدار اسکالر به آرایه
+        print("✅ Weights successfully loaded!")
