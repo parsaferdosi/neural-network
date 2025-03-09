@@ -1,60 +1,58 @@
-import numpy as np
-from neuron import Neuron
+import cupy as cp
 
 class Layers:
     def __init__(self, num_neurons, input_size, activation="relu"):
         self.activation = activation
-        self.neurons = [Neuron(input_size, activation) for _ in range(num_neurons)]
-        self.output = None  
-        self.raw_inputs = None  
+        self.weights = cp.random.randn(input_size, num_neurons) * cp.sqrt(2 / input_size)  # مقداردهی He
+        self.biases = cp.zeros((1, num_neurons))
 
-    def softmax(self, x):
-        """ اعمال Softmax به کل لایه به صورت ماتریسی """
-        exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))  # جلوگیری از overflow
-        return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    @staticmethod
+    def softmax(x):
+        max_x = cp.max(x, axis=1, keepdims=True)
+        exp_x = cp.exp(x - max_x)
+        return exp_x / cp.sum(exp_x, axis=1, keepdims=True)
 
-    def softmax_derivative(self, softmax_output):
-        """ محاسبه مشتق Softmax (بر اساس ماتریس ژاکوبین) """
-        batch_size, num_classes = softmax_output.shape
-        jacobian = np.zeros((batch_size, num_classes, num_classes))
+    def activate(self, x):
+        if self.activation == "relu":
+            return cp.maximum(0, x)
+        elif self.activation == "sigmoid":
+            return 1 / (1 + cp.exp(-cp.clip(x, -500, 500)))
+        return x  # خروجی خطی
 
-        for i in range(batch_size):
-            s = softmax_output[i].reshape(-1, 1)
-            jacobian[i] = np.diagflat(s) - np.dot(s, s.T)
-
-        return jacobian  
+    def activate_derivative(self, x):
+        if self.activation == "relu":
+            return (x > 0).astype(cp.float32)
+        elif self.activation == "sigmoid":
+            return x * (1 - x)
+        return cp.ones_like(x)
 
     def feedforward(self, inputs):
         self.inputs = inputs
-        self.raw_inputs = np.dot(inputs, np.array([neuron.weight for neuron in self.neurons]).T) + \
-                          np.array([neuron.bias for neuron in self.neurons]).T  
+        self.raw_inputs = cp.dot(inputs, self.weights) + self.biases
 
         if self.activation == "softmax":
-            self.output = self.softmax(self.raw_inputs)  # استفاده از softmax برای کل لایه
+            self.output = self.softmax(self.raw_inputs)
         else:
-            self.output = np.vstack([neuron.activate(self.raw_inputs[:, i]) for i, neuron in enumerate(self.neurons)]).T
+            self.output = self.activate(self.raw_inputs)
+
         return self.output
 
     def backward(self, error, learning_rate):
-        """ انتشار خطا به عقب """
         if self.activation == "softmax":
-            softmax_derivative = self.softmax_derivative(self.output)
-            error = np.einsum('bij,bj->bi', softmax_derivative, error)  # محاسبه Δ با ماتریس ژاکوبین
+            error = self.output * (error - cp.sum(error * self.output, axis=1, keepdims=True))
 
-        activation_derivative = np.vstack([
-            neuron.activate_derivative(self.raw_inputs[:, i]) for i, neuron in enumerate(self.neurons)
-        ]).T
-        delta = error * activation_derivative  
+        activation_derivative = self.activate_derivative(self.raw_inputs)
+        delta = error * activation_derivative
 
         batch_size = delta.shape[0]
-        num_neurons = len(self.neurons)
-        delta = delta.reshape(batch_size, num_neurons)
-        weights = np.array([neuron.weight for neuron in self.neurons])  
 
-        prev_error = np.dot(delta, weights)  
-        self.inputs = self.inputs.reshape(batch_size, -1)  
+        prev_error = cp.dot(delta, self.weights.T)
+        self.weights += learning_rate * cp.dot(self.inputs.T, delta) / batch_size
+        self.biases += learning_rate * cp.mean(delta, axis=0, keepdims=True)
 
-        for i, neuron in enumerate(self.neurons):
-            neuron.weight += learning_rate * np.dot(self.inputs.T, delta[:, i]) / batch_size  # نرمال‌سازی گرادیان‌ها
-            neuron.bias += learning_rate * np.mean(delta[:, i], axis=0, keepdims=True)  
-        return prev_error  
+        cp.get_default_memory_pool().free_all_blocks()
+
+        return prev_error
+    def set_weights(self, weights, biases):
+        self.weights = weights
+        self.biases = biases
