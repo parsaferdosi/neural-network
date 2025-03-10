@@ -18,7 +18,7 @@ class Canvas(QWidget):#ایجاد کلاس بوم نقاشی
     def mouseMoveEvent(self,event:QMouseEvent):
         if self.last_point is not None:
             painter=QPainter(self.pixmap)
-            pen=QPen(Qt.GlobalColor.black,10,Qt.PenStyle.SolidLine,Qt.PenCapStyle.RoundCap,Qt.PenJoinStyle.RoundJoin)
+            pen=QPen(Qt.GlobalColor.black,20,Qt.PenStyle.SolidLine,Qt.PenCapStyle.RoundCap,Qt.PenJoinStyle.RoundJoin)
             painter.setPen(pen)
             painter.drawLine(self.last_point,event.position().toPoint())
             self.last_point=event.position().toPoint()
@@ -43,7 +43,7 @@ class Canvas(QWidget):#ایجاد کلاس بوم نقاشی
         gray = cv2.cvtColor(array, cv2.COLOR_RGBA2GRAY)  
 
         inverted = cv2.bitwise_not(gray)  # 🔴 وارونه کردن رنگ تصویر
-        resized = cv2.resize(inverted, (24, 24), interpolation=cv2.INTER_AREA)  
+        resized = cv2.resize(inverted, (28, 28), interpolation=cv2.INTER_AREA)  
         normalized = resized / 255.0  
 
         print("📌 تصویر پردازش‌شده:", normalized.flatten())  # برای دیباگ

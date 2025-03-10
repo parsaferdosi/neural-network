@@ -48,8 +48,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # بارگذاری مدل
-    model = NeuralNetwork(layer_sizes=[576, 128, 64, 10], learning_rate=0.001)
-    model.load_weight("memmoryCore.npz")  # بارگذاری وزن‌های ذخیره‌شده
+    model = NeuralNetwork(layer_sizes=[784, 576, 128, 64, 10], learning_rate=0.001)
+    model.load_weights()  # بارگذاری وزن‌های ذخیره‌شده
     
     window = MainWindow(model)
     window.show()
