@@ -2,15 +2,42 @@ import cupy as cp  # استفاده از CuPy برای پردازش سریع ر�
 import numpy as np  # استفاده از NumPy برای برخی پردازش‌های تصویر
 import cv2  # OpenCV برای پردازش تصویر
 import random  # تولید اعداد تصادفی
+import os  # برای مدیریت فایل‌ها و پوشه‌ها
 from network import NeuralNetwork  # ایمپورت کلاس شبکه عصبی
 
 # ✅ مسیر فایل داده‌های آموزشی
-train_path = r"E:\My nurual network from scratch\mnist_data\mnist_train.csv"
+csv_path = r"E:\My nurual network from scratch\mnist_data\numbers.csv"
+image_base_path = r"E:\My nurual network from scratch\mnist_data\numbers"  # مسیر اصلی تصاویر
 
-# ✅ بارگذاری داده‌های آموزشی روی GPU
-train_data = cp.loadtxt(train_path, delimiter=',', dtype=cp.float32)  # خواندن داده‌ها از فایل CSV
-train_images = train_data[:, 1:] / 255.0  # استخراج تصاویر و نرمال‌سازی پیکسل‌ها به محدوده [0,1]
-train_labels = train_data[:, 0].astype(cp.int32)  # استخراج لیبل‌ها و تبدیل آن‌ها به عدد صحیح
+# ✅ بارگذاری داده‌های آموزشی از CSV
+image_paths = []
+labels = []
+
+with open(csv_path, "r") as file:
+    next(file)  # رد کردن هدر CSV
+    for line in file:
+        origin, group, label, img_name = line.strip().split(",")
+        label = int(label)  # برچسب عددی از ستون label
+        image_paths.append(os.path.join(image_base_path, img_name))  # اضافه کردن مسیر کامل تصویر
+        labels.append(label)
+
+# ✅ بارگذاری تصویر (این کار باید روی CPU انجام شود چون OpenCV با NumPy سازگار است)
+def load_image(image_path, target_size=(28, 28)):
+    if not os.path.exists(image_path):  # بررسی وجود تصویر
+        print(f"Image not found: {image_path}")
+        return None
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # خواندن تصویر به صورت خاکستری
+    if img is None:
+        print(f"Failed to load image: {image_path}")
+        return None
+    img = cv2.resize(img, target_size)  # تغییر اندازه تصویر
+    img = img.astype(np.float32) / 255.0  # نرمال‌سازی تصویر
+    return cp.array(img)  # بازگشت به صورت آرایه CuPy
+
+# ✅ تبدیل لیبل‌ها به فرمت One-Hot Encoding
+def one_hot_encoding(labels):
+    labels = cp.array(labels, dtype=cp.int32)  # تبدیل لیبل‌ها به نوع صحیح
+    return cp.eye(10, dtype=cp.float32)[labels]
 
 # ✅ تغییر اندازه تصاویر (این کار باید روی CPU انجام شود، چون OpenCV با NumPy سازگار است)
 def resize_images(images, new_size=(28, 28)):
@@ -29,10 +56,23 @@ def resize_images(images, new_size=(28, 28)):
     
     return cp.array(resized_images)  # تبدیل دوباره به CuPy برای پردازش روی GPU
 
-# ✅ اعمال تغییر اندازه روی تصاویر آموزشی
-train_images_resized = resize_images(train_images)
+# ✅ بارگذاری و پیش‌پردازش داده‌ها
+def load_and_process_data(image_paths, labels):
+    images = []
+    for img_path in image_paths:
+        img = load_image(img_path)  # بارگذاری تصویر
+        if img is not None:
+            images.append(img)
+    
+    images = cp.array(images)  # تبدیل تصاویر به CuPy array
+    images_resized = resize_images(images)  # تغییر اندازه تصاویر
+    labels_onehot = one_hot_encoding(labels)  # تبدیل برچسب‌ها به One-Hot encoding
+    return images_resized, labels_onehot
 
-# ✅ افزایش داده‌ها با چرخش و نویز تصادفی (این کار روی CPU انجام می‌شود)
+# ✅ پیش‌پردازش داده‌ها
+train_images_resized, train_labels_onehot = load_and_process_data(image_paths, labels)
+
+# ✅ افزایش داده‌ها با چرخش و نویز تصادفی
 def augment_image(image):
     """
     افزایش داده‌ها با استفاده از چرخش تصادفی و نویز
@@ -53,11 +93,11 @@ def augment_image(image):
 
     return cp.array(img_np.flatten())  # تبدیل دوباره به CuPy و بازگرداندن تصویر افزایش‌یافته
 
-# ✅ ایجاد مجموعه داده افزایش‌یافته (افزایش داده‌ها با دو برابر شدن مجموعه)
+# ✅ ایجاد مجموعه داده افزایش‌یافته
 augmented_images = []
 augmented_labels = []
 
-for img, label in zip(cp.asnumpy(train_images_resized), cp.asnumpy(train_labels)):  # تبدیل داده‌ها به NumPy
+for img, label in zip(cp.asnumpy(train_images_resized), cp.asnumpy(train_labels_onehot)):  # تبدیل داده‌ها به NumPy
     augmented_images.append(img)  # ذخیره تصویر اصلی
     augmented_images.append(cp.asnumpy(augment_image(cp.array(img) * 255)) / 255.0)  # ذخیره تصویر افزایش‌یافته
     augmented_labels.append(label)  # ذخیره لیبل اصلی
@@ -66,13 +106,6 @@ for img, label in zip(cp.asnumpy(train_images_resized), cp.asnumpy(train_labels)
 # ✅ تبدیل لیست‌های افزایش داده‌شده به آرایه‌های NumPy، سپس به CuPy
 augmented_images = cp.array(np.array(augmented_images, dtype=np.float32))  # تبدیل به آرایه CuPy
 augmented_labels = cp.array(np.array(augmented_labels, dtype=np.int32))  # تبدیل به آرایه CuPy
-
-# ✅ تبدیل لیبل‌ها به فرمت One-Hot Encoding برای یادگیری بهتر
-train_labels_onehot = cp.eye(10, dtype=cp.float32)[augmented_labels]
-
-# ✅ بررسی شکل داده‌های پردازش‌شده
-print(f"Train data shape: {augmented_images.shape}")  # نمایش تعداد نمونه‌های نهایی
-print(f"Labels shape: {train_labels_onehot.shape}")  # نمایش شکل برچسب‌های One-Hot
 
 # ✅ ساخت شبکه عصبی با معماری مشخص‌شده
 network = NeuralNetwork(layer_sizes=[784, 576, 128, 64, 10], learning_rate=0.001)
@@ -83,7 +116,7 @@ end = cp.cuda.Event()
 start.record()
 
 # ✅ شروع آموزش مدل
-network.train(augmented_images, train_labels_onehot, epochs=1000)
+network.train(augmented_images, augmented_labels, epochs=1000)
 
 # ✅ پایان تایمر و محاسبه مدت زمان آموزش
 end.record()
