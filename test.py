@@ -7,7 +7,7 @@ def resize_images(images, new_size=(12, 12)):
     return np.array([zoom(img.reshape(28, 28), (new_size[0] / 28, new_size[1] / 28)).flatten() for img in images])
 start=time.time()
 # مدل ذخیره‌شده را بارگذاری کن
-model = NeuralNetwork(layer_sizes=[144,36,24, 10], learning_rate=0.001)
+model = NeuralNetwork(layer_sizes=[576, 128, 64, 10], learning_rate=0.001)
 model.load_weight("memmoryCore.npz")
 
 # داده‌های تست را بارگذاری کن
